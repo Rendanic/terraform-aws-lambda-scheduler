@@ -2,15 +2,15 @@
 resource "aws_cloudwatch_event_rule" "check-scheduler-event" {
     name = "${var.resource_name_prefix}check-scheduler-event"
     description = "check-scheduler-event"
-    schedule_expression = "${var.schedule_expression}"
-    depends_on = ["aws_lambda_function.scheduler_lambda"]
+    schedule_expression = var.schedule_expression
+    depends_on = [aws_lambda_function.scheduler_lambda]
 }
 
 # Cloudwatch event target
 resource "aws_cloudwatch_event_target" "check-scheduler-event-lambda-target" {
     target_id = "check-scheduler-event-lambda-target"
-    rule = "${aws_cloudwatch_event_rule.check-scheduler-event.name}"
-    arn = "${aws_lambda_function.scheduler_lambda.arn}"
+    rule = aws_cloudwatch_event_rule.check-scheduler-event.name
+    arn = aws_lambda_function.scheduler_lambda.arn
 }
 
 # IAM Role for Lambda function
@@ -56,12 +56,12 @@ data "aws_iam_policy_document" "ec2-access-scheduler" {
 resource "aws_iam_policy" "ec2-access-scheduler" {
     name = "${var.resource_name_prefix}ec2-access-scheduler"
     path = "/"
-    policy = "${data.aws_iam_policy_document.ec2-access-scheduler.json}"
+    policy = data.aws_iam_policy_document.ec2-access-scheduler.json
 }
 
 resource "aws_iam_role_policy_attachment" "ec2-access-scheduler" {
-    role       = "${aws_iam_role.scheduler_lambda.name}"
-    policy_arn = "${aws_iam_policy.ec2-access-scheduler.arn}"
+    role       = aws_iam_role.scheduler_lambda.name
+    policy_arn = aws_iam_policy.ec2-access-scheduler.arn
 }
 
 ## create custom role
@@ -93,8 +93,8 @@ EOF
 }
 
 resource "aws_iam_role_policy_attachment" "basic-exec-role" {
-    role       = "${aws_iam_role.scheduler_lambda.name}"
-    policy_arn = "${aws_iam_policy.scheduler_aws_lambda_basic_execution_role.arn}"
+    role       = aws_iam_role.scheduler_lambda.name
+    policy_arn = aws_iam_policy.scheduler_aws_lambda_basic_execution_role.arn
 }
 
 # AWS Lambda need a zip file
@@ -106,16 +106,16 @@ data "archive_file" "aws-scheduler" {
 
 # AWS Lambda function
 resource "aws_lambda_function" "scheduler_lambda" {
-    filename = "${data.archive_file.aws-scheduler.output_path}"
+    filename = data.archive_file.aws-scheduler.output_path
     function_name = "${var.resource_name_prefix}aws-scheduler"
-    role = "${aws_iam_role.scheduler_lambda.arn}"
+    role = aws_iam_role.scheduler_lambda.arn
     handler = "aws-scheduler.handler"
     runtime = "python3.7"
     timeout = 300
-    source_code_hash = "${data.archive_file.aws-scheduler.output_base64sha256}"
+    source_code_hash = data.archive_file.aws-scheduler.output_base64sha256
     vpc_config {
-      security_group_ids = "${var.security_group_ids}"
-      subnet_ids = "${var.subnet_ids}"
+      security_group_ids = var.security_group_ids
+      subnet_ids = var.subnet_ids
     }
     environment {
       variables = {
@@ -133,7 +133,7 @@ resource "aws_lambda_function" "scheduler_lambda" {
 resource "aws_lambda_permission" "allow_cloudwatch_to_call_scheduler" {
     statement_id = "AllowExecutionFromCloudWatch"
     action = "lambda:InvokeFunction"
-    function_name = "${aws_lambda_function.scheduler_lambda.function_name}"
+    function_name = aws_lambda_function.scheduler_lambda.function_name
     principal = "events.amazonaws.com"
-    source_arn = "${aws_cloudwatch_event_rule.check-scheduler-event.arn}"
+    source_arn = aws_cloudwatch_event_rule.check-scheduler-event.arn
 }

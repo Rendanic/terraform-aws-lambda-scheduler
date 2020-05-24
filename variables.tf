@@ -9,7 +9,7 @@ variable "tag" {
 }
 
 variable "schedule_tag_force" {
-  type = "string"
+  type = string
   default = "false"
   description = "Whether to force the EC2 or RDS instance to have the default schedule tag is no schedule tag exists for the instance."
 }
@@ -30,25 +30,25 @@ variable "time" {
 }
 
 variable "ec2_schedule" {
-  type = "string"
+  type = string
   default = "true"
   description = "Whether to do scheduling for EC2 instances."
 }
 
 variable "rds_schedule" {
-  type = "string"
+  type = string
   default = "true"
   description = "Whether to do scheduling for RDS instances."
 }
 
 variable "security_group_ids" {
-  type = "list"
+  type = list(string)
   default = []
   description = "list of the vpc security groups to run lambda scheduler in."
 }
 
 variable "subnet_ids" {
-  type = "list"
+  type = list(string)
   default = []
   description = "list of subnet_ids that the scheduler runs in."
 }
